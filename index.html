@@ -360,13 +360,26 @@ html[data-theme="dark"] .add-url-btn{color:var(--gold);}
   display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto;
 }
 
-.vinfo .vtext-copy-btn {
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  border: none; background: transparent; padding: 2px 0; color: var(--ink-soft);
-  font-size: 0.72rem; font-weight: 500; font-family: inherit; transition: color 0.15s ease;
+.vinfo .vtext-copy-btn, .vinfo .vtext-share-btn {
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); 
+  background: var(--paper); 
+  width: 28px; 
+  height: 28px; 
+  border-radius: 50%; 
+  color: var(--ink-soft);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
-.vcard:hover .vtext-copy-btn { color: var(--gold); }
-.vinfo .vtext-copy-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
+.vinfo .vtext-copy-btn:hover, .vinfo .vtext-share-btn:hover {
+  background: var(--gold-soft); color: var(--gold-strong); border-color: var(--gold);
+}
+html[data-theme="dark"] .vinfo .vtext-copy-btn:hover, 
+html[data-theme="dark"] .vinfo .vtext-share-btn:hover {
+  color: var(--gold);
+}
+.vinfo .vtext-copy-btn svg, .vinfo .vtext-share-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 
 .vinfo .timecode{
   font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--ink-faint);
@@ -1153,36 +1166,64 @@ footer{padding:26px 0 40px;text-align:center;color:var(--ink-faint);font-size:.8
           '<p class="domain" title="' + escapeHtml(displayTitle) + '">' + escapeHtml(displayTitle) + '</p>' +
           '<p class="url-line">' + escapeHtml(item.url) + '</p>' +
           '<div class="meta-action-row">' +
-            '<button class="vtext-copy-btn" aria-label="Copy link address" data-copy-url="' + escapeHtml(item.url) + '">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' +
-              '<span>Copy</span>' +
-            '</button>' +
+            '<div style="display: flex; gap: 8px;">' +
+              '<button class="vtext-copy-btn" aria-label="Copy link address" data-copy-url="' + escapeHtml(item.url) + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' +
+              '</button>' +
+              '<button class="vtext-share-btn" aria-label="Share link" data-share-url="' + escapeHtml(item.url) + '" data-share-title="' + escapeHtml(displayTitle) + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>' +
+              '</button>' +
+            '</div>' +
             '<p class="timecode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>' + fmtDate(item.addedAt) + '</p>' +
           '</div>' +
         '</div>';
 
       vcard.addEventListener("click", function(e){
-        if(e.target.closest("[data-del-url]") || e.target.closest("[data-copy-url]")) return;
+        if(e.target.closest("[data-del-url]") || e.target.closest("[data-copy-url]") || e.target.closest("[data-share-url]")) return;
         window.open(item.url, "_blank", "noopener");
       });
-      videoGrid.appendChild(vcard);
-    });
 
-    // Copy action address block logic
-    videoGrid.querySelectorAll("[data-copy-url]").forEach(function(btn){
-      btn.addEventListener("click", function(e){
-        e.stopPropagation();
-        var urlToCopy = btn.getAttribute("data-copy-url");
-        navigator.clipboard.writeText(urlToCopy).then(function() {
-          var originalIcon = btn.innerHTML;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Copied</span>';
-          setTimeout(function() {
-            btn.innerHTML = originalIcon;
-          }, 1200);
-        }).catch(function(err) {
-          console.error("Failed to copy link address", err);
+      // Bind functional click event loops on runtime card creation nodes directly
+      var copyBtn = vcard.querySelector(".vtext-copy-btn");
+      if (copyBtn) {
+        copyBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          var urlToCopy = this.getAttribute("data-copy-url");
+          navigator.clipboard.writeText(urlToCopy).then(function() {
+            var originalIcon = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            setTimeout(function() {
+              copyBtn.innerHTML = originalIcon;
+            }, 1200);
+          }).catch(function(err) {
+            console.error("Failed to copy link address", err);
+          });
         });
-      });
+      }
+
+      var shareBtn = vcard.querySelector(".vtext-share-btn");
+      if (shareBtn) {
+        shareBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          var urlToShare = this.getAttribute("data-share-url");
+          var titleToShare = this.getAttribute("data-share-title");
+          if (navigator.share) {
+            navigator.share({ title: titleToShare, url: urlToShare }).catch(function(err) {
+              console.warn("Share canceled or failed", err);
+            });
+          } else {
+            navigator.clipboard.writeText(urlToShare).then(function() {
+              var originalIcon = shareBtn.innerHTML;
+              shareBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+              setTimeout(function() {
+                shareBtn.innerHTML = originalIcon;
+              }, 1200);
+            });
+          }
+        });
+      }
+
+      videoGrid.appendChild(vcard);
     });
 
     videoGrid.querySelectorAll("[data-del-url]").forEach(function(btn){
@@ -1455,7 +1496,6 @@ footer{padding:26px 0 40px;text-align:center;color:var(--ink-faint);font-size:.8
   
   renderHome();
 })();
-
 </script>
 </body>
 </html>
